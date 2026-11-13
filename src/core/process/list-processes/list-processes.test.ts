@@ -15,7 +15,6 @@ test('it lists the processes in the order they were registered', () => {
     ptys: new Map(),
     readyBuffers: new Map(),
     readied: new Set(),
-    readyCaptures: new Map(),
     stopping: new Set(),
     restarting: new Set(),
   }
@@ -40,7 +39,6 @@ test('changing the listed processes does not change the state', () => {
     ptys: new Map(),
     readyBuffers: new Map(),
     readied: new Set(),
-    readyCaptures: new Map(),
     stopping: new Set(),
     restarting: new Set(),
   }
@@ -59,7 +57,6 @@ test('without processes the list is empty', () => {
     ptys: new Map(),
     readyBuffers: new Map(),
     readied: new Set(),
-    readyCaptures: new Map(),
     stopping: new Set(),
     restarting: new Set(),
   }

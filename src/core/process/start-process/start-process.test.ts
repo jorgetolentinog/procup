@@ -16,7 +16,6 @@ test('a stopped, finished or failed process is spawned again without its last ex
       ptys: new Map(),
       readyBuffers: new Map(),
       readied: new Set(),
-      readyCaptures: new Map(),
       stopping: new Set(),
       restarting: new Set(),
     }
@@ -48,7 +47,6 @@ test('a process that is pending or alive cannot be started', () => {
       ptys: new Map(),
       readyBuffers: new Map(),
       readied: new Set(),
-      readyCaptures: new Map(),
       stopping: new Set(),
       restarting: new Set(),
     }
@@ -81,7 +79,6 @@ test('a spawn failure is returned as is', () => {
     ptys: new Map(),
     readyBuffers: new Map(),
     readied: new Set(),
-    readyCaptures: new Map(),
     stopping: new Set(),
     restarting: new Set(),
   }
@@ -102,7 +99,6 @@ test('an unknown process is not found', () => {
     ptys: new Map(),
     readyBuffers: new Map(),
     readied: new Set(),
-    readyCaptures: new Map(),
     stopping: new Set(),
     restarting: new Set(),
   }

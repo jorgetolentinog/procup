@@ -10,7 +10,6 @@ test('an unknown process is not found', async () => {
     ptys: new Map(),
     readyBuffers: new Map(),
     readied: new Set(),
-    readyCaptures: new Map(),
     stopping: new Set(),
     restarting: new Set(),
   }
@@ -40,7 +39,6 @@ test('a pending, stopping or skipped process cannot be restarted', async () => {
         ptys: new Map(),
         readyBuffers: new Map(),
         readied: new Set(),
-        readyCaptures: new Map(),
         stopping: new Set(),
         restarting: new Set(),
       }
@@ -87,7 +85,6 @@ test('a dead process is spawned again right away without its last exit code', as
     ptys: new Map(),
     readyBuffers: new Map(),
     readied: new Set(),
-    readyCaptures: new Map(),
     stopping: new Set(),
     restarting: new Set(),
   }
@@ -146,7 +143,6 @@ test('a running process is terminated, and spawned again once it exits, with no 
     ]),
     readyBuffers: new Map(),
     readied: new Set(),
-    readyCaptures: new Map(),
     stopping: new Set(),
     restarting: new Set(),
   }
@@ -211,7 +207,6 @@ test('a process that ignores SIGTERM is killed after 2 seconds', async () => {
     ]),
     readyBuffers: new Map(),
     readied: new Set(),
-    readyCaptures: new Map(),
     stopping: new Set(),
     restarting: new Set(),
   }
@@ -273,7 +268,6 @@ test('a process group that is already gone is not an error', async () => {
     ]),
     readyBuffers: new Map(),
     readied: new Set(),
-    readyCaptures: new Map(),
     stopping: new Set(),
     restarting: new Set(),
   }
@@ -317,7 +311,6 @@ test('any other error while killing is not hidden', async () => {
     ]),
     readyBuffers: new Map(),
     readied: new Set(),
-    readyCaptures: new Map(),
     stopping: new Set(),
     restarting: new Set(),
   }

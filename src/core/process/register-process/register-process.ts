@@ -8,7 +8,7 @@ export type RegisterProcessInput = {
   env?: Record<string, string>
   envFile?: string | string[] | false
   dependsOn?: string[]
-  readyPattern?: RegExp
+  readyText?: string
   showCommand?: boolean
 }
 
@@ -42,7 +42,7 @@ export function registerProcess(
     env: input.env ?? {},
     envFile: input.envFile,
     dependsOn: input.dependsOn ?? [],
-    readyPattern: input.readyPattern,
+    readyText: input.readyText,
     showCommand: input.showCommand ?? true,
     status: 'pending',
   })

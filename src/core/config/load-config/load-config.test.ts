@@ -82,7 +82,7 @@ test('a command string is a process with the defaults', () => {
           env: {},
           envFile: undefined,
           dependsOn: [],
-          readyPattern: undefined,
+          readyText: undefined,
           showCommand: true,
         },
       ],
@@ -119,7 +119,7 @@ test('globals apply to every process', () => {
           env: { MODE: 'dev' },
           envFile: '.env',
           dependsOn: [],
-          readyPattern: undefined,
+          readyText: undefined,
           showCommand: false,
         },
       ],
@@ -158,7 +158,7 @@ test('a process overrides the globals and merges the env', () => {
           env: { MODE: 'api', SHARED: 'yes' },
           envFile: false,
           dependsOn: [],
-          readyPattern: undefined,
+          readyText: undefined,
           showCommand: true,
         },
       ],
@@ -290,17 +290,17 @@ test('dependsOn accepts a name or a list', () => {
   }
 })
 
-test('readyPattern becomes a regular expression with its groups', () => {
+test('readyText is kept as plain text', () => {
   const cwd = nodeFs.mkdtempSync(join(tmpdir(), 'procup-load-config-'))
   try {
     nodeFs.writeFileSync(
       join(cwd, '.procuprc'),
-      JSON.stringify({ processes: { db: { command: 'db', readyPattern: 'port (?<port>\\d+)' } } }),
+      JSON.stringify({ processes: { db: { command: 'db', readyText: 'listening on port (3000)' } } }),
     )
 
     const result = loadConfig({ nodeFs, nodeProcess: { env: {} } }, { cwd })
 
-    expect(result).toMatchObject({ ok: true, processes: [{ name: 'db', readyPattern: /port (?<port>\d+)/ }] })
+    expect(result).toMatchObject({ ok: true, processes: [{ name: 'db', readyText: 'listening on port (3000)' }] })
   } finally {
     nodeFs.rmSync(cwd, { recursive: true, force: true })
   }
@@ -317,9 +317,11 @@ test('invalid configs explain what is wrong', () => {
     [{ processes: { web: { command: 'x', dependsOn: 'web' } } }, 'Process "web" cannot depend on itself'],
     [{ processes: { web: { command: 'x', dependsOn: 3 } } }, 'Process "web".dependsOn must be a string or array'],
     [{ processes: { web: { command: 'x', dependsOn: [3] } } }, 'Process "web".dependsOn entries must be strings'],
+    [{ processes: { web: { command: 'x', readyText: 3 } } }, 'Process "web".readyText must be a non-empty string'],
+    [{ processes: { web: { command: 'x', readyText: '' } } }, 'Process "web".readyText must be a non-empty string'],
     [
-      { processes: { web: { command: 'x', readyPattern: '(' } } },
-      'Process "web".readyPattern is not a valid regex: "("',
+      { processes: { web: { command: 'x', readyPattern: 'listening' } } },
+      'Process "web".readyPattern was renamed to readyText (plain text, no regex)',
     ],
     [{ env: { PORT: 3000 }, processes: { web: 'x' } }, 'env.PORT must be a string, got number'],
     [

@@ -11,7 +11,6 @@ test('an unknown process is not found', () => {
     ptys: new Map(),
     readyBuffers: new Map(),
     readied: new Set(),
-    readyCaptures: new Map(),
     stopping: new Set(),
     restarting: new Set(),
   }
@@ -44,7 +43,6 @@ test('a process that is alive or skipped cannot be spawned', () => {
       ptys: new Map(),
       readyBuffers: new Map(),
       readied: new Set(),
-      readyCaptures: new Map(),
       stopping: new Set(),
       restarting: new Set(),
     }
@@ -98,7 +96,6 @@ test('the command runs in a shell with the process cwd, terminal size and env', 
     ptys: new Map(),
     readyBuffers: new Map(),
     readied: new Set(),
-    readyCaptures: new Map(),
     stopping: new Set(),
     restarting: new Set(),
   }
@@ -160,7 +157,6 @@ test('with showCommand off the command line is not printed', () => {
     ptys: new Map(),
     readyBuffers: new Map(),
     readied: new Set(),
-    readyCaptures: new Map(),
     stopping: new Set(),
     restarting: new Set(),
   }
@@ -200,7 +196,7 @@ test('a stopped, finished or failed process starts over with a clean readiness',
             cwd: '/app',
             env: {},
             dependsOn: [],
-            readyPattern: /up/,
+            readyText: 'up',
             showCommand: false,
             status,
             exitCode: 1,
@@ -210,7 +206,6 @@ test('a stopped, finished or failed process starts over with a clean readiness',
       ptys: new Map(),
       readyBuffers: new Map([['db', 'old output']]),
       readied: new Set(['db']),
-      readyCaptures: new Map(),
       stopping: new Set(['db']),
       restarting: new Set(),
     }
@@ -256,7 +251,6 @@ test('the output and the exit of the process are handed over', () => {
     ptys: new Map(),
     readyBuffers: new Map(),
     readied: new Set(),
-    readyCaptures: new Map(),
     stopping: new Set(),
     restarting: new Set(),
   }
@@ -293,67 +287,6 @@ test('the output and the exit of the process are handed over', () => {
   ])
 })
 
-test('$dependency.group is replaced in the command and env with what the dependency captured', () => {
-  const spawned: { command: string | undefined; env: Record<string, string | undefined> }[] = []
-  const events: ProcessEvent[] = []
-  const state: ProcessState = {
-    size: { cols: 80, rows: 24 },
-    rows: new Map([
-      [
-        'api',
-        {
-          name: 'api',
-          command: 'start --db $db.port --missing $db.nope --other $cache.port',
-          cwd: '/app',
-          env: { DATABASE_URL: 'postgres://localhost:$db.port/app', PLAIN: 'value' },
-          dependsOn: ['db'],
-          showCommand: true,
-          status: 'pending',
-        },
-      ],
-    ]),
-    ptys: new Map(),
-    readyBuffers: new Map(),
-    readied: new Set(),
-    readyCaptures: new Map<string, Record<string, string>>([
-      ['db', { port: '5432', 1: '5432' }],
-      ['cache', { port: '6379' }],
-    ]),
-    stopping: new Set(),
-    restarting: new Set(),
-  }
-
-  spawnProcess(
-    {
-      nodePty: {
-        spawn: (_file, args, options) => {
-          spawned.push({ command: args[1], env: options.env })
-          return { pid: 1, onData: () => true, onExit: () => true, write: () => true, resize: () => true }
-        },
-      },
-      nodeFs: { readFileSync: () => '' },
-      nodeUtil: { parseEnv },
-      nodeProcess: { env: { PATH: '/usr/bin' } },
-      emit: event => events.push(event),
-      handleOutput: () => true,
-      handleExit: () => true,
-    },
-    { state },
-    { name: 'api' },
-  )
-
-  expect(spawned.map(call => [call.command, call.env.DATABASE_URL, call.env.PLAIN])).toStrictEqual([
-    ['start --db 5432 --missing $db.nope --other $cache.port', 'postgres://localhost:5432/app', 'value'],
-  ])
-  expect(state.rows.get('api')?.command).toBe('start --db $db.port --missing $db.nope --other $cache.port')
-  expect(state.rows.get('api')?.commandOverride).toBe('start --db 5432 --missing $db.nope --other $cache.port')
-  expect(events[1]).toStrictEqual({
-    type: 'output',
-    name: 'api',
-    chunk: '\x1b[2m$ start --db 5432 --missing $db.nope --other $cache.port\x1b[0m\r\n\r\n',
-  })
-})
-
 test('env files are read from the process cwd in order and the process env wins', () => {
   const spawned: Record<string, string | undefined>[] = []
   const readFileSync = vi
@@ -380,7 +313,6 @@ test('env files are read from the process cwd in order and the process env wins'
     ptys: new Map(),
     readyBuffers: new Map(),
     readied: new Set(),
-    readyCaptures: new Map(),
     stopping: new Set(),
     restarting: new Set(),
   }
@@ -434,7 +366,6 @@ test('a missing env file fails the start and says which file', () => {
     ptys: new Map(),
     readyBuffers: new Map(),
     readied: new Set(),
-    readyCaptures: new Map(),
     stopping: new Set(),
     restarting: new Set(),
   }
@@ -494,7 +425,6 @@ test('an env file that cannot be read fails the start with the reason', () => {
     ptys: new Map(),
     readyBuffers: new Map(),
     readied: new Set(),
-    readyCaptures: new Map(),
     stopping: new Set(),
     restarting: new Set(),
   }
@@ -537,7 +467,6 @@ test('a shell that cannot be spawned fails the start', () => {
     ptys: new Map(),
     readyBuffers: new Map(),
     readied: new Set(),
-    readyCaptures: new Map(),
     stopping: new Set(),
     restarting: new Set(),
   }

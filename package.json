@@ -1,6 +1,6 @@
 {
   "name": "procup",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Run your dev processes in one terminal, started in dependency order: processes up.",
   "keywords": [
     "concurrently",

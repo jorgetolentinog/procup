@@ -31,7 +31,7 @@ type ProcessDefinition = {
   env: Record<string, string>
   envFile?: string | string[] | false
   dependsOn: string[]
-  readyPattern?: RegExp
+  readyText?: string
   showCommand: boolean
 }
 
@@ -128,7 +128,7 @@ function processOf(
   const p = processRecordOf(name, entry.value)
   const command = commandOf(name, p.command)
   const dependsOn = dependsOnOf(name, p.dependsOn, entry.names)
-  const readyPattern = readyPatternOf(name, p.readyPattern)
+  const readyText = readyTextOf(name, p)
   const processCwd = typeof p.cwd === 'string' ? p.cwd : undefined
   const processEnv = isRecord(p.env) ? envOf(p.env, `Process "${name}".env.`) : undefined
 
@@ -139,7 +139,7 @@ function processOf(
     env: { ...globals.env, ...processEnv },
     envFile: input.envFile ?? envFileOf(p.envFile) ?? globals.envFile,
     dependsOn,
-    readyPattern,
+    readyText,
     showCommand: typeof p.showCommand === 'boolean' ? p.showCommand : (globals.showCommand ?? true),
   }
 }
@@ -171,13 +171,15 @@ function dependsOnOf(name: string, value: unknown, names: string[]): string[] {
   return dependsOn
 }
 
-function readyPatternOf(name: string, value: unknown): RegExp | undefined {
-  if (typeof value !== 'string') return undefined
-  try {
-    return new RegExp(value)
-  } catch (err) {
-    throw new Error(`Process "${name}".readyPattern is not a valid regex: "${value}"`, { cause: err })
+function readyTextOf(name: string, p: Record<string, unknown>): string | undefined {
+  if (p.readyPattern !== undefined) {
+    throw new Error(`Process "${name}".readyPattern was renamed to readyText (plain text, no regex)`)
   }
+  if (p.readyText === undefined) return undefined
+  if (typeof p.readyText !== 'string' || p.readyText === '') {
+    throw new Error(`Process "${name}".readyText must be a non-empty string`)
+  }
+  return p.readyText
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

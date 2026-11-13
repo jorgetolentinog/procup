@@ -194,7 +194,7 @@ test('names are dim when the process is not running, except a failed one', async
   ])
 })
 
-test('a process waiting for its readyPattern spins in yellow and advances with the spinner frame', async () => {
+test('a process waiting for its readyText spins in yellow and advances with the spinner frame', async () => {
   const term = new xtermHeadless.Terminal({ cols: 100, rows: 30, allowProposedApi: true })
   const state: TuiState = {
     names: ['db', 'web'],
@@ -229,7 +229,7 @@ test('a process waiting for its readyPattern spins in yellow and advances with t
   const deps = {
     procup: {
       listProcesses: () => [
-        { name: 'db', status: 'running', readyPattern: /ready/ },
+        { name: 'db', status: 'running', readyText: 'ready' },
         { name: 'web', status: 'running' },
       ],
       readScreen: () => ({ total: 0, lines: [], cursor: null }),

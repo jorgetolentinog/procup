@@ -24,13 +24,11 @@ export type ProcessRow = {
   env: Record<string, string>
   envFile?: string | string[] | false
   dependsOn: string[]
-  readyPattern?: RegExp
+  readyText?: string
   showCommand: boolean
   status: ProcessStatus
   pid?: number
   exitCode?: number | null
-  commandOverride?: string
-  envOverride?: Record<string, string>
 }
 
 export type ProcessState = {
@@ -39,7 +37,6 @@ export type ProcessState = {
   ptys: Map<string, PtyHandle>
   readyBuffers: Map<string, string>
   readied: Set<string>
-  readyCaptures: Map<string, Record<string, string>>
   stopping: Set<string>
   restarting: Set<string>
 }

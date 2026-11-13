@@ -33,14 +33,11 @@ export function spawnProcess(
   ctx: SpawnProcessCtx,
   input: SpawnProcessInput,
 ): SpawnProcessResult {
-  let row = ctx.state.rows.get(input.name)
+  const row = ctx.state.rows.get(input.name)
   if (!row) return { ok: false, error: 'not_found' }
   if (row.status !== 'pending' && row.status !== 'stopped' && row.status !== 'finished' && row.status !== 'failed') {
     return { ok: false, error: 'not_startable' }
   }
-
-  row = expandCaptures(row, capturesOf(ctx, row))
-  const command = row.commandOverride ?? row.command
 
   ctx.state.rows.set(row.name, { ...row, status: 'starting' })
   deps.emit({ type: 'status', name: row.name, status: 'starting' })
@@ -49,7 +46,7 @@ export function spawnProcess(
   try {
     const envFromFile = readEnvFiles(deps, row)
 
-    pty = deps.nodePty.spawn('sh', ['-c', command], {
+    pty = deps.nodePty.spawn('sh', ['-c', row.command], {
       name: 'xterm-256color',
       cols: ctx.state.size.cols,
       rows: ctx.state.size.rows,
@@ -58,7 +55,7 @@ export function spawnProcess(
         ...deps.nodeProcess.env,
         TERM: 'xterm-256color',
         ...envFromFile,
-        ...(row.envOverride ?? row.env),
+        ...row.env,
       },
     })
   } catch (error) {
@@ -80,39 +77,11 @@ export function spawnProcess(
   ctx.state.stopping.delete(row.name)
 
   if (row.showCommand) {
-    deps.emit({ type: 'output', name: row.name, chunk: `\x1b[2m$ ${command}\x1b[0m\r\n\r\n` })
+    deps.emit({ type: 'output', name: row.name, chunk: `\x1b[2m$ ${row.command}\x1b[0m\r\n\r\n` })
   }
   deps.emit({ type: 'status', name: row.name, status: 'running' })
 
   return { ok: true }
-}
-
-function capturesOf(ctx: SpawnProcessCtx, row: ProcessRow): Map<string, Record<string, string>> {
-  const captures = new Map<string, Record<string, string>>()
-  for (const dep of row.dependsOn) {
-    const c = ctx.state.readyCaptures.get(dep)
-    if (c) captures.set(dep, c)
-  }
-  return captures
-}
-
-function expandCaptures(row: ProcessRow, captures: Map<string, Record<string, string>>): ProcessRow {
-  if (captures.size === 0) return row
-  const names = [...captures.keys()].map(n => n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')
-  const refPattern = new RegExp(`\\$(${names})\\.(\\w+)`, 'g')
-  const replacer = (match: string, dep: string, key: string) => captures.get(dep)?.[key] ?? match
-  const command = row.command.replace(refPattern, replacer)
-  const env: Record<string, string> = {}
-  let envChanged = false
-  for (const [k, v] of Object.entries(row.env)) {
-    env[k] = v.replace(refPattern, replacer)
-    if (env[k] !== v) envChanged = true
-  }
-  return {
-    ...row,
-    commandOverride: command !== row.command ? command : row.commandOverride,
-    envOverride: envChanged ? env : row.envOverride,
-  }
 }
 
 function envFilesOf(envFile: ProcessRow['envFile']): string[] {

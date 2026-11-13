@@ -20,7 +20,7 @@ export function handleExit(deps: HandleExitDeps, ctx: HandleExitCtx, input: Hand
 
   const code = input.signal > 0 ? null : input.exitCode
 
-  if (!row.readyPattern && code === 0 && !ctx.state.readied.has(row.name)) {
+  if (row.readyText === undefined && code === 0 && !ctx.state.readied.has(row.name)) {
     ctx.state.readied.add(row.name)
     row = { ...row, status: 'ready' }
     ctx.state.rows.set(row.name, row)

@@ -31,7 +31,6 @@ test('every process and every screen gets the new size', () => {
     ]),
     readyBuffers: new Map(),
     readied: new Set(),
-    readyCaptures: new Map(),
     stopping: new Set(),
     restarting: new Set(),
   }
@@ -57,7 +56,6 @@ test('sizes that are not positive whole numbers are rejected', () => {
     ]),
     readyBuffers: new Map(),
     readied: new Set(),
-    readyCaptures: new Map(),
     stopping: new Set(),
     restarting: new Set(),
   }
@@ -105,7 +103,6 @@ test('a process that just died does not stop the others from resizing', () => {
     ]),
     readyBuffers: new Map(),
     readied: new Set(),
-    readyCaptures: new Map(),
     stopping: new Set(),
     restarting: new Set(),
   }
@@ -140,7 +137,6 @@ test('any other resize error is not hidden', () => {
     ]),
     readyBuffers: new Map(),
     readied: new Set(),
-    readyCaptures: new Map(),
     stopping: new Set(),
     restarting: new Set(),
   }

@@ -16,7 +16,6 @@ test('a pending process is skipped', () => {
     ptys: new Map(),
     readyBuffers: new Map(),
     readied: new Set(),
-    readyCaptures: new Map(),
     stopping: new Set(),
     restarting: new Set(),
   }
@@ -41,7 +40,6 @@ test('a process that already started is not skipped', () => {
     ptys: new Map(),
     readyBuffers: new Map(),
     readied: new Set(),
-    readyCaptures: new Map(),
     stopping: new Set(),
     restarting: new Set(),
   }
@@ -61,7 +59,6 @@ test('an unknown process is not found', () => {
     ptys: new Map(),
     readyBuffers: new Map(),
     readied: new Set(),
-    readyCaptures: new Map(),
     stopping: new Set(),
     restarting: new Set(),
   }

@@ -9,7 +9,7 @@ type ProcessDefinition = {
   env: Record<string, string>
   envFile?: string | string[] | false
   dependsOn: string[]
-  readyPattern?: RegExp
+  readyText?: string
   showCommand: boolean
 }
 

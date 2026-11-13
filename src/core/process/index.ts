@@ -35,7 +35,6 @@ export function createProcess(deps: CreateProcessDeps) {
     ptys: new Map(),
     readyBuffers: new Map(),
     readied: new Set(),
-    readyCaptures: new Map(),
     stopping: new Set(),
     restarting: new Set(),
   }

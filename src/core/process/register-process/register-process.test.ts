@@ -11,7 +11,6 @@ test('a registered process starts as pending with the defaults', () => {
     ptys: new Map(),
     readyBuffers: new Map(),
     readied: new Set(),
-    readyCaptures: new Map(),
     stopping: new Set(),
     restarting: new Set(),
   }
@@ -30,7 +29,7 @@ test('a registered process starts as pending with the defaults', () => {
     env: {},
     envFile: undefined,
     dependsOn: [],
-    readyPattern: undefined,
+    readyText: undefined,
     showCommand: true,
     status: 'pending',
   })
@@ -45,11 +44,9 @@ test('the given options are kept', () => {
     ptys: new Map(),
     readyBuffers: new Map(),
     readied: new Set(),
-    readyCaptures: new Map(),
     stopping: new Set(),
     restarting: new Set(),
   }
-  const readyPattern = /listening/
 
   registerProcess(
     { emit: event => events.push(event) },
@@ -61,7 +58,7 @@ test('the given options are kept', () => {
       env: { PORT: '3000' },
       envFile: ['.env', '.env.local'],
       dependsOn: ['db'],
-      readyPattern,
+      readyText: 'listening',
       showCommand: false,
     },
   )
@@ -73,7 +70,7 @@ test('the given options are kept', () => {
     env: { PORT: '3000' },
     envFile: ['.env', '.env.local'],
     dependsOn: ['db'],
-    readyPattern,
+    readyText: 'listening',
     showCommand: false,
     status: 'pending',
   })
@@ -87,7 +84,6 @@ test('the name is trimmed', () => {
     ptys: new Map(),
     readyBuffers: new Map(),
     readied: new Set(),
-    readyCaptures: new Map(),
     stopping: new Set(),
     restarting: new Set(),
   }
@@ -105,7 +101,6 @@ test('a blank name is rejected', () => {
     ptys: new Map(),
     readyBuffers: new Map(),
     readied: new Set(),
-    readyCaptures: new Map(),
     stopping: new Set(),
     restarting: new Set(),
   }
@@ -129,7 +124,6 @@ test('a blank command is rejected', () => {
     ptys: new Map(),
     readyBuffers: new Map(),
     readied: new Set(),
-    readyCaptures: new Map(),
     stopping: new Set(),
     restarting: new Set(),
   }
@@ -152,7 +146,6 @@ test('a name can be registered only once', () => {
     ptys: new Map(),
     readyBuffers: new Map(),
     readied: new Set(),
-    readyCaptures: new Map(),
     stopping: new Set(),
     restarting: new Set(),
   }

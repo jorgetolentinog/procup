@@ -49,7 +49,7 @@ const HELP_LEGEND: [status: string, label: string][] = [
 ]
 
 type StyledRun = { text: string; attrs: string; fg: string; bg: string }
-type ProcessView = { name: string; status: string; readyPattern?: unknown }
+type ProcessView = { name: string; status: string; readyText?: string }
 type Cursor = { x: number; y: number }
 type Frame = { lines: string[]; cursor: Cursor | null }
 type Tint = (code: string) => string
@@ -255,7 +255,7 @@ function renderTabs(state: TuiState, processes: Map<string, ProcessView>, inner:
   return state.names.map((name, i) => {
     const p = processes.get(name)
     const status = p?.status ?? 'pending'
-    const icon = statusIcon(status, status === 'running' && p?.readyPattern !== undefined, spin)
+    const icon = statusIcon(status, status === 'running' && p?.readyText !== undefined, spin)
     if (icon.glyph === spin) state.spinning = true
     const nameStyle =
       i === state.active ? [BOLD, state.inputMode ? '' : tint(ACCENT)] : [NOT_RUNNING.has(status) ? DIM : '']

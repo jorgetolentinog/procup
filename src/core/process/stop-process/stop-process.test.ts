@@ -10,7 +10,6 @@ test('an unknown process is not found', async () => {
     ptys: new Map(),
     readyBuffers: new Map(),
     readied: new Set(),
-    readyCaptures: new Map(),
     stopping: new Set(),
     restarting: new Set(),
   }
@@ -38,7 +37,6 @@ test('a process that is not alive has nothing to stop', async () => {
         ptys: new Map(),
         readyBuffers: new Map(),
         readied: new Set(),
-        readyCaptures: new Map(),
         stopping: new Set(),
         restarting: new Set(),
       }
@@ -93,7 +91,6 @@ test('a running process gets SIGTERM and ends as stopped once it exits', async (
     ]),
     readyBuffers: new Map(),
     readied: new Set(),
-    readyCaptures: new Map(),
     stopping: new Set(),
     restarting: new Set(),
   }
@@ -155,7 +152,6 @@ test('when the exit already marked it stopped, it is not announced twice', async
     ]),
     readyBuffers: new Map(),
     readied: new Set(),
-    readyCaptures: new Map(),
     stopping: new Set(),
     restarting: new Set(),
   }
@@ -204,7 +200,6 @@ test('a failed process is marked as stopped when stopped by hand', async () => {
     ptys: new Map(),
     readyBuffers: new Map(),
     readied: new Set(),
-    readyCaptures: new Map(),
     stopping: new Set(),
     restarting: new Set(),
   }
@@ -244,7 +239,6 @@ test('stopping the project keeps the status of a process that already died', asy
     ptys: new Map(),
     readyBuffers: new Map(),
     readied: new Set(),
-    readyCaptures: new Map(),
     stopping: new Set(),
     restarting: new Set(),
   }
@@ -295,7 +289,6 @@ test('a process that ignores SIGTERM is killed after 5 seconds', async () => {
     ]),
     readyBuffers: new Map(),
     readied: new Set(),
-    readyCaptures: new Map(),
     stopping: new Set(),
     restarting: new Set(),
   }
@@ -356,7 +349,6 @@ test('a process group that is already gone is not an error', async () => {
     ]),
     readyBuffers: new Map(),
     readied: new Set(),
-    readyCaptures: new Map(),
     stopping: new Set(),
     restarting: new Set(),
   }
@@ -400,7 +392,6 @@ test('any other error while killing is not hidden', async () => {
     ]),
     readyBuffers: new Map(),
     readied: new Set(),
-    readyCaptures: new Map(),
     stopping: new Set(),
     restarting: new Set(),
   }

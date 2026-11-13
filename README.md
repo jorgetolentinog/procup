@@ -32,29 +32,15 @@ Create a `.procuprc` file (JSON) in your project:
 ```json
 {
   "processes": {
-    "db": {
-      "command": "docker compose up postgres",
-      "readyPattern": "ready to accept connections"
-    },
-    "migrate": {
-      "command": "npm run migrate",
-      "dependsOn": "db"
-    },
-    "api": {
-      "command": "npm run dev",
-      "cwd": "apps/api",
-      "dependsOn": "migrate",
-      "readyPattern": "listening on port (?<port>\\d+)"
-    },
-    "web": {
-      "command": "npm run dev",
-      "cwd": "apps/web",
-      "dependsOn": "api",
-      "env": { "API_URL": "http://localhost:$api.port" }
-    }
+    "db": "docker compose up -d --wait",
+    "migrate": { "command": "npm run migrate", "dependsOn": "db" },
+    "api": { "command": "npm run dev", "cwd": "apps/api", "dependsOn": "migrate" },
+    "web": { "command": "npm run dev", "cwd": "apps/web" }
   }
 }
 ```
+
+`docker compose up -d --wait` exits once the database is healthy, `migrate` exits when it is done, and only then `api` starts. `web` does not wait for anything.
 
 Then run:
 
@@ -67,10 +53,23 @@ procup
 - A process with no `dependsOn` starts right away.
 - A process with `dependsOn` waits until **all** its dependencies are ready.
 - A dependency is ready when:
-  - it has a `readyPattern` and that pattern appears in its output (a long-running server), or
-  - it has no `readyPattern` and exits with code 0 (a one-shot task such as a migration).
+  - it has no `readyText` and exits with code 0 (a one-shot task such as a migration), or
+  - it has a `readyText` and that text appears in its output (a long-running server).
 - If a dependency fails, the processes that depend on it are skipped.
 - On quit, processes stop in reverse: a process stops only after everything that depends on it has stopped.
+
+### Waiting for a server
+
+A server never exits, so give it a `readyText`: a line it prints once it is up. Plain text, not a regex; colors are ignored.
+
+```json
+{
+  "processes": {
+    "redis": { "command": "redis-server", "readyText": "Ready to accept connections" },
+    "worker": { "command": "npm run worker", "dependsOn": "redis" }
+  }
+}
+```
 
 ## Configuration
 
@@ -80,15 +79,15 @@ procup
 
 A process is either a command string or an object:
 
-| Field          | Type                          | Description                                                     |
-| -------------- | ----------------------------- | --------------------------------------------------------------- |
-| `command`      | `string`                      | Shell command to run (required).                                |
-| `cwd`          | `string`                      | Working directory, relative to the project.                     |
-| `env`          | `object`                      | Extra environment variables (string values).                    |
-| `envFile`      | `string \| string[] \| false` | `.env` file(s) to load, relative to `cwd`. Read on every start. |
-| `dependsOn`    | `string \| string[]`          | Processes that must be ready first.                             |
-| `readyPattern` | `string`                      | Regular expression that marks the process as ready.             |
-| `showCommand`  | `boolean`                     | Print the command at the top of the pane. Default `true`.       |
+| Field         | Type                          | Description                                                     |
+| ------------- | ----------------------------- | --------------------------------------------------------------- |
+| `command`     | `string`                      | Shell command to run (required).                                |
+| `cwd`         | `string`                      | Working directory, relative to the project.                     |
+| `env`         | `object`                      | Extra environment variables (string values).                    |
+| `envFile`     | `string \| string[] \| false` | `.env` file(s) to load, relative to `cwd`. Read on every start. |
+| `dependsOn`   | `string \| string[]`          | Processes that must be ready first.                             |
+| `readyText`   | `string`                      | Text in the output that marks the process as ready.             |
+| `showCommand` | `boolean`                     | Print the command at the top of the pane. Default `true`.       |
 
 ```json
 { "processes": { "web": "npm run dev" } }
@@ -97,19 +96,6 @@ A process is either a command string or an object:
 ### Global options
 
 `cwd`, `env`, `envFile` and `showCommand` can also be set at the top level. They apply to every process, and each process can override them.
-
-### Passing values between processes
-
-Groups captured by a dependency's `readyPattern` can be used in the `command` and `env` of the processes that depend on it: `$name.group` for named groups, `$name.1` for positional ones.
-
-```json
-{
-  "processes": {
-    "db": { "command": "./start-db.sh", "readyPattern": "port (?<port>\\d+)" },
-    "api": { "command": "DB_PORT=$db.port npm run dev", "dependsOn": "db" }
-  }
-}
-```
 
 ### Environment variables
 
@@ -152,7 +138,7 @@ With the mouse: click a tab to switch, scroll with the wheel, drag the scrollbar
 | Icon       | Meaning                                                 |
 | ---------- | ------------------------------------------------------- |
 | `○` gray   | pending: waiting for its dependencies                   |
-| `⠋` yellow | starting, or waiting for its `readyPattern`             |
+| `⠋` yellow | starting, or waiting for its `readyText`                |
 | `●` green  | running / ready                                         |
 | `✓` green  | finished: a one-shot task that exited with 0            |
 | `✖` red    | failed: the exit code is printed at the end of its pane |

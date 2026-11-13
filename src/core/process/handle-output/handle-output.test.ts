@@ -11,7 +11,6 @@ test('output of an unknown process is not found', () => {
     ptys: new Map(),
     readyBuffers: new Map(),
     readied: new Set(),
-    readyCaptures: new Map(),
     stopping: new Set(),
     restarting: new Set(),
   }
@@ -35,7 +34,6 @@ test('output is forwarded as is', () => {
     ptys: new Map(),
     readyBuffers: new Map(),
     readied: new Set(),
-    readyCaptures: new Map(),
     stopping: new Set(),
     restarting: new Set(),
   }
@@ -51,7 +49,7 @@ test('output is forwarded as is', () => {
   expect(state.rows.get('web')?.status).toBe('running')
 })
 
-test('the readyPattern can match across chunks', () => {
+test('the readyText can match across chunks', () => {
   const events: ProcessEvent[] = []
   const state: ProcessState = {
     size: { cols: 80, rows: 24 },
@@ -64,7 +62,7 @@ test('the readyPattern can match across chunks', () => {
           cwd: '/app',
           env: {},
           dependsOn: [],
-          readyPattern: /listening on port/,
+          readyText: 'listening on port',
           showCommand: true,
           status: 'running',
         },
@@ -73,7 +71,6 @@ test('the readyPattern can match across chunks', () => {
     ptys: new Map(),
     readyBuffers: new Map(),
     readied: new Set(),
-    readyCaptures: new Map(),
     stopping: new Set(),
     restarting: new Set(),
   }
@@ -93,7 +90,7 @@ test('the readyPattern can match across chunks', () => {
   expect(state.readyBuffers.has('db')).toBe(false)
 })
 
-test('colors and escape codes are ignored when matching the readyPattern', () => {
+test('colors and escape codes are ignored when matching the readyText', () => {
   const events: ProcessEvent[] = []
   const state: ProcessState = {
     size: { cols: 80, rows: 24 },
@@ -106,7 +103,7 @@ test('colors and escape codes are ignored when matching the readyPattern', () =>
           cwd: '/app',
           env: {},
           dependsOn: [],
-          readyPattern: /ready in \d+ms/,
+          readyText: 'ready in 120ms',
           showCommand: true,
           status: 'running',
         },
@@ -115,7 +112,6 @@ test('colors and escape codes are ignored when matching the readyPattern', () =>
     ptys: new Map(),
     readyBuffers: new Map(),
     readied: new Set(),
-    readyCaptures: new Map(),
     stopping: new Set(),
     restarting: new Set(),
   }
@@ -129,20 +125,20 @@ test('colors and escape codes are ignored when matching the readyPattern', () =>
   expect(result).toStrictEqual({ ok: true, becameReady: true })
 })
 
-test('named and positional captures are kept for the dependents', () => {
+test('the readyText is matched as plain text, not as a regex', () => {
   const events: ProcessEvent[] = []
   const state: ProcessState = {
     size: { cols: 80, rows: 24 },
     rows: new Map([
       [
-        'db',
+        'api',
         {
-          name: 'db',
-          command: 'db',
+          name: 'api',
+          command: 'api',
           cwd: '/app',
           env: {},
           dependsOn: [],
-          readyPattern: /port (?<port>\d+) on (\w+)( with tls)?/,
+          readyText: 'listening on port (3000)',
           showCommand: true,
           status: 'running',
         },
@@ -151,50 +147,17 @@ test('named and positional captures are kept for the dependents', () => {
     ptys: new Map(),
     readyBuffers: new Map(),
     readied: new Set(),
-    readyCaptures: new Map(),
     stopping: new Set(),
     restarting: new Set(),
   }
 
-  handleOutput(
+  const result = handleOutput(
     { emit: event => events.push(event) },
     { state },
-    { name: 'db', chunk: 'listening on port 5432 on localhost' },
+    { name: 'api', chunk: 'listening on port (3000)\r\n' },
   )
 
-  expect(state.readyCaptures.get('db')).toStrictEqual({ port: '5432', 1: '5432', 2: 'localhost' })
-})
-
-test('a readyPattern without groups stores no captures', () => {
-  const events: ProcessEvent[] = []
-  const state: ProcessState = {
-    size: { cols: 80, rows: 24 },
-    rows: new Map([
-      [
-        'web',
-        {
-          name: 'web',
-          command: 'web',
-          cwd: '/app',
-          env: {},
-          dependsOn: [],
-          readyPattern: /ready/,
-          showCommand: true,
-          status: 'running',
-        },
-      ],
-    ]),
-    ptys: new Map(),
-    readyBuffers: new Map(),
-    readied: new Set(),
-    readyCaptures: new Map(),
-    stopping: new Set(),
-    restarting: new Set(),
-  }
-
-  handleOutput({ emit: event => events.push(event) }, { state }, { name: 'web', chunk: 'ready' })
-
-  expect(state.readyCaptures.has('web')).toBe(false)
+  expect(result).toStrictEqual({ ok: true, becameReady: true })
 })
 
 test('a process that is already ready does not become ready again', () => {
@@ -210,7 +173,7 @@ test('a process that is already ready does not become ready again', () => {
           cwd: '/app',
           env: {},
           dependsOn: [],
-          readyPattern: /ready/,
+          readyText: 'ready',
           showCommand: true,
           status: 'ready',
         },
@@ -219,7 +182,6 @@ test('a process that is already ready does not become ready again', () => {
     ptys: new Map(),
     readyBuffers: new Map(),
     readied: new Set(['web']),
-    readyCaptures: new Map(),
     stopping: new Set(),
     restarting: new Set(),
   }
@@ -230,7 +192,7 @@ test('a process that is already ready does not become ready again', () => {
   expect(events).toStrictEqual([{ type: 'output', name: 'web', chunk: 'ready again' }])
 })
 
-test('without a readyPattern output never makes a process ready', () => {
+test('without a readyText output never makes a process ready', () => {
   const events: ProcessEvent[] = []
   const state: ProcessState = {
     size: { cols: 80, rows: 24 },
@@ -243,7 +205,6 @@ test('without a readyPattern output never makes a process ready', () => {
     ptys: new Map(),
     readyBuffers: new Map(),
     readied: new Set(),
-    readyCaptures: new Map(),
     stopping: new Set(),
     restarting: new Set(),
   }

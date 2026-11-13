@@ -11,7 +11,6 @@ test('an unknown process is not found', () => {
     ptys: new Map(),
     readyBuffers: new Map(),
     readied: new Set(),
-    readyCaptures: new Map(),
     stopping: new Set(),
     restarting: new Set(),
   }
@@ -46,7 +45,6 @@ test('a one-shot task exiting with 0 becomes ready and then finished', () => {
     ]),
     readyBuffers: new Map([['migrate', 'partial']]),
     readied: new Set(),
-    readyCaptures: new Map(),
     stopping: new Set(),
     restarting: new Set(),
   }
@@ -71,7 +69,7 @@ test('a one-shot task exiting with 0 becomes ready and then finished', () => {
   expect(state.readied.has('migrate')).toBe(true)
 })
 
-test('a process with readyPattern exiting with 0 finishes without becoming ready', () => {
+test('a process with readyText exiting with 0 finishes without becoming ready', () => {
   const events: ProcessEvent[] = []
   const state: ProcessState = {
     size: { cols: 80, rows: 24 },
@@ -84,7 +82,7 @@ test('a process with readyPattern exiting with 0 finishes without becoming ready
           cwd: '/app',
           env: {},
           dependsOn: [],
-          readyPattern: /up/,
+          readyText: 'up',
           showCommand: true,
           status: 'running',
         },
@@ -93,7 +91,6 @@ test('a process with readyPattern exiting with 0 finishes without becoming ready
     ptys: new Map(),
     readyBuffers: new Map(),
     readied: new Set(),
-    readyCaptures: new Map(),
     stopping: new Set(),
     restarting: new Set(),
   }
@@ -119,7 +116,6 @@ test('a task that was already ready does not become ready twice', () => {
     ptys: new Map(),
     readyBuffers: new Map(),
     readied: new Set(['job']),
-    readyCaptures: new Map(),
     stopping: new Set(),
     restarting: new Set(),
   }
@@ -144,7 +140,6 @@ test('a non-zero exit fails and prints the exit code in the pane', () => {
     ptys: new Map(),
     readyBuffers: new Map(),
     readied: new Set(),
-    readyCaptures: new Map(),
     stopping: new Set(),
     restarting: new Set(),
   }
@@ -173,7 +168,6 @@ test('exit 127 explains that the command was not found', () => {
     ptys: new Map(),
     readyBuffers: new Map(),
     readied: new Set(),
-    readyCaptures: new Map(),
     stopping: new Set(),
     restarting: new Set(),
   }
@@ -199,7 +193,6 @@ test('exit 126 explains that permission was denied', () => {
     ptys: new Map(),
     readyBuffers: new Map(),
     readied: new Set(),
-    readyCaptures: new Map(),
     stopping: new Set(),
     restarting: new Set(),
   }
@@ -224,7 +217,6 @@ test('a process killed by a signal fails with no exit code and no exit line', ()
     ptys: new Map(),
     readyBuffers: new Map(),
     readied: new Set(),
-    readyCaptures: new Map(),
     stopping: new Set(),
     restarting: new Set(),
   }
@@ -252,7 +244,6 @@ test('a process that was being stopped ends as stopped', () => {
     ptys: new Map(),
     readyBuffers: new Map(),
     readied: new Set(),
-    readyCaptures: new Map(),
     stopping: new Set(['web']),
     restarting: new Set(),
   }
@@ -291,7 +282,6 @@ test('a process being restarted exits without a final status', () => {
     ]),
     readyBuffers: new Map(),
     readied: new Set(),
-    readyCaptures: new Map(),
     stopping: new Set(),
     restarting: new Set(['web']),
   }
