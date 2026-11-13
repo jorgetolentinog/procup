@@ -12,12 +12,24 @@
     "terminal",
     "tui"
   ],
+  "homepage": "https://github.com/jorgetolentinog/procup#readme",
+  "bugs": {
+    "url": "https://github.com/jorgetolentinog/procup/issues"
+  },
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jorgetolentinog/procup.git"
+  },
   "bin": {
-    "procup": "./dist/main.js"
+    "procup": "dist/main.js"
   },
   "files": [
     "dist"
+  ],
+  "os": [
+    "darwin",
+    "linux"
   ],
   "type": "module",
   "scripts": {
@@ -29,7 +41,8 @@
     "test": "vitest run",
     "check": "tsc --noEmit && oxfmt --check && oxlint && knip && vitest run",
     "build": "tsc -p tsconfig.build.json",
-    "prepublishOnly": "npm run check && npm run build"
+    "prepublishOnly": "npm run check",
+    "prepack": "npm run build"
   },
   "dependencies": {
     "@xterm/headless": "6.0.0",
