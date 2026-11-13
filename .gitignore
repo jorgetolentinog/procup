@@ -1,0 +1,6 @@
+.*
+!.gitignore
+!.oxlintrc.json
+!.oxfmtrc.json
+node_modules/
+dist/

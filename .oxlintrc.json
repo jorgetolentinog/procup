@@ -1,0 +1,79 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["typescript", "unicorn", "oxc", "import", "node", "promise"],
+  "options": {
+    "typeAware": true
+  },
+  "categories": {
+    "correctness": "error",
+    "suspicious": "error",
+    "perf": "error"
+  },
+  "rules": {
+    "typescript/no-unnecessary-condition": "error",
+    "typescript/no-non-null-assertion": "error",
+    "typescript/no-explicit-any": "error",
+    "typescript/switch-exhaustiveness-check": "error",
+    "typescript/no-misused-promises": "error",
+    "typescript/require-await": "error",
+    "typescript/only-throw-error": "error",
+    "eslint/no-empty": "error",
+    "eslint/no-useless-return": "error",
+    "eslint/eqeqeq": "error",
+    "eslint/no-var": "error",
+    "import/no-cycle": "error",
+    "eslint/no-restricted-imports": [
+      "error",
+      {
+        "patterns": [
+          {
+            "group": ["../**"],
+            "allowTypeImports": true,
+            "message": "Going up (../) only types may be imported: values are injected by index.ts."
+          }
+        ]
+      }
+    ],
+    "typescript/no-deprecated": "error",
+    "node/no-process-env": "error",
+    "typescript/strict-boolean-expressions": "error",
+    "typescript/prefer-nullish-coalescing": "error",
+    "eslint/complexity": "error",
+    "eslint/max-depth": "error",
+    "eslint/max-params": "error",
+    "eslint/max-nested-callbacks": "error",
+    "eslint/no-nested-ternary": "error",
+    "eslint/no-param-reassign": "error",
+    "eslint/no-implicit-coercion": "error",
+    "unicorn/no-array-reduce": "error",
+    "unicorn/no-useless-switch-case": "error"
+  },
+  "overrides": [
+    {
+      "files": ["**/*.test.ts"],
+      "plugins": ["vitest"],
+      "rules": {
+        "vitest/no-hooks": "error",
+        "vitest/no-import-node-test": "error",
+        "vitest/require-hook": "error",
+        "vitest/no-conditional-in-test": "error",
+        "vitest/no-identical-title": "error",
+        "vitest/consistent-test-it": "error",
+        "vitest/prefer-strict-equal": "error",
+        "vitest/no-test-return-statement": "error",
+        "vitest/no-restricted-vi-methods": [
+          "error",
+          {
+            "useFakeTimers": "Do not patch globals or modules in tests: inject the dependency and pass a fake.",
+            "setSystemTime": "Do not patch globals or modules in tests: inject the dependency and pass a fake.",
+            "spyOn": "Do not patch globals or modules in tests: inject the dependency and pass a fake.",
+            "stubEnv": "Do not patch globals or modules in tests: inject the dependency and pass a fake.",
+            "stubGlobal": "Do not patch globals or modules in tests: inject the dependency and pass a fake.",
+            "mock": "Do not patch globals or modules in tests: inject the dependency and pass a fake.",
+            "doMock": "Do not patch globals or modules in tests: inject the dependency and pass a fake."
+          }
+        ]
+      }
+    }
+  ]
+}
