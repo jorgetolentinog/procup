@@ -84,6 +84,7 @@ test('a command string is a process with the defaults', () => {
           dependsOn: [],
           readyText: undefined,
           showCommand: true,
+          autostart: true,
         },
       ],
     })
@@ -121,6 +122,7 @@ test('globals apply to every process', () => {
           dependsOn: [],
           readyText: undefined,
           showCommand: false,
+          autostart: true,
         },
       ],
     })
@@ -160,6 +162,7 @@ test('a process overrides the globals and merges the env', () => {
           dependsOn: [],
           readyText: undefined,
           showCommand: true,
+          autostart: true,
         },
       ],
     })
@@ -380,6 +383,28 @@ test('a longer cycle names every process in it', () => {
       ok: false,
       error: 'config_error',
       message: 'Dependency cycle detected: a → c → b → a',
+    })
+  } finally {
+    nodeFs.rmSync(cwd, { recursive: true, force: true })
+  }
+})
+
+test('autostart is on unless it is set to false', () => {
+  const cwd = nodeFs.mkdtempSync(join(tmpdir(), 'procup-load-config-'))
+  try {
+    nodeFs.writeFileSync(
+      join(cwd, '.procuprc'),
+      JSON.stringify({ processes: { app: 'npm run dev', studio: { command: 'npx prisma studio', autostart: false } } }),
+    )
+
+    const result = loadConfig({ nodeFs, nodeProcess: { env: {} } }, { cwd })
+
+    expect(result).toMatchObject({
+      ok: true,
+      processes: [
+        { name: 'app', autostart: true },
+        { name: 'studio', autostart: false },
+      ],
     })
   } finally {
     nodeFs.rmSync(cwd, { recursive: true, force: true })

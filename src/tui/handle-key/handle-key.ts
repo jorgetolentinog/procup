@@ -24,7 +24,7 @@ type Command = { key: Key; name: string }
 
 const ESCAPE = '\x1b'
 const MOUSE = /^\[<(\d+);(\d+);(\d+)([Mm])$/
-const STARTABLE = new Set(['stopped', 'finished', 'failed'])
+const STARTABLE = new Set(['pending', 'stopped', 'finished', 'failed', 'skipped'])
 
 const NAMED: Record<string, string> = { '\r': 'return', '\n': 'linefeed', '\t': 'tab', '\x7f': 'backspace' }
 

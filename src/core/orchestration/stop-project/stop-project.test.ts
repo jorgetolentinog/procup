@@ -5,10 +5,10 @@ import { stopProject } from './stop-project.ts'
 test('it stops dependents before their dependencies', async () => {
   const state: OrchestrationState = {
     nodes: new Map([
-      ['db', { name: 'db', dependsOn: [], state: 'ready' as const }],
-      ['cache', { name: 'cache', dependsOn: [], state: 'ready' as const }],
-      ['api', { name: 'api', dependsOn: ['db', 'cache'], state: 'ready' as const }],
-      ['web', { name: 'web', dependsOn: ['api'], state: 'started' as const }],
+      ['db', { name: 'db', dependsOn: [], autostart: true, state: 'ready' as const }],
+      ['cache', { name: 'cache', dependsOn: [], autostart: true, state: 'ready' as const }],
+      ['api', { name: 'api', dependsOn: ['db', 'cache'], autostart: true, state: 'ready' as const }],
+      ['web', { name: 'web', dependsOn: ['api'], autostart: true, state: 'started' as const }],
     ]),
     stopping: false,
   }
@@ -31,8 +31,8 @@ test('it stops dependents before their dependencies', async () => {
 test('a dependency waits until its dependent has stopped', async () => {
   const state: OrchestrationState = {
     nodes: new Map([
-      ['db', { name: 'db', dependsOn: [], state: 'ready' as const }],
-      ['api', { name: 'api', dependsOn: ['db'], state: 'ready' as const }],
+      ['db', { name: 'db', dependsOn: [], autostart: true, state: 'ready' as const }],
+      ['api', { name: 'api', dependsOn: ['db'], autostart: true, state: 'ready' as const }],
     ]),
     stopping: false,
   }
@@ -68,8 +68,8 @@ test('a dependency waits until its dependent has stopped', async () => {
 test('a process that fails to stop does not block the rest', async () => {
   const state: OrchestrationState = {
     nodes: new Map([
-      ['db', { name: 'db', dependsOn: [], state: 'ready' as const }],
-      ['api', { name: 'api', dependsOn: ['db'], state: 'failed' as const }],
+      ['db', { name: 'db', dependsOn: [], autostart: true, state: 'ready' as const }],
+      ['api', { name: 'api', dependsOn: ['db'], autostart: true, state: 'failed' as const }],
     ]),
     stopping: false,
   }
@@ -87,7 +87,7 @@ test('a process that fails to stop does not block the rest', async () => {
 
 test('only live processes are stopped, keeping the state of the dead ones', async () => {
   const state: OrchestrationState = {
-    nodes: new Map([['db', { name: 'db', dependsOn: [], state: 'ready' as const }]]),
+    nodes: new Map([['db', { name: 'db', dependsOn: [], autostart: true, state: 'ready' as const }]]),
     stopping: false,
   }
   const received: unknown[] = []
@@ -107,7 +107,7 @@ test('only live processes are stopped, keeping the state of the dead ones', asyn
 
 test('the project is flagged as stopping before any process is stopped', async () => {
   const state: OrchestrationState = {
-    nodes: new Map([['db', { name: 'db', dependsOn: [], state: 'ready' as const }]]),
+    nodes: new Map([['db', { name: 'db', dependsOn: [], autostart: true, state: 'ready' as const }]]),
     stopping: false,
   }
   const seen: boolean[] = []
@@ -139,9 +139,9 @@ test('an empty project stops at once', async () => {
 test('independent processes do not wait for each other', async () => {
   const state: OrchestrationState = {
     nodes: new Map([
-      ['db', { name: 'db', dependsOn: [], state: 'ready' as const }],
-      ['cache', { name: 'cache', dependsOn: [], state: 'ready' as const }],
-      ['api', { name: 'api', dependsOn: ['db'], state: 'ready' as const }],
+      ['db', { name: 'db', dependsOn: [], autostart: true, state: 'ready' as const }],
+      ['cache', { name: 'cache', dependsOn: [], autostart: true, state: 'ready' as const }],
+      ['api', { name: 'api', dependsOn: ['db'], autostart: true, state: 'ready' as const }],
     ]),
     stopping: false,
   }
@@ -171,9 +171,9 @@ test('independent processes do not wait for each other', async () => {
 test('a dependency shared by several dependents waits for all of them', async () => {
   const state: OrchestrationState = {
     nodes: new Map([
-      ['db', { name: 'db', dependsOn: [], state: 'ready' as const }],
-      ['api', { name: 'api', dependsOn: ['db'], state: 'ready' as const }],
-      ['worker', { name: 'worker', dependsOn: ['db'], state: 'ready' as const }],
+      ['db', { name: 'db', dependsOn: [], autostart: true, state: 'ready' as const }],
+      ['api', { name: 'api', dependsOn: ['db'], autostart: true, state: 'ready' as const }],
+      ['worker', { name: 'worker', dependsOn: ['db'], autostart: true, state: 'ready' as const }],
     ]),
     stopping: false,
   }

@@ -25,7 +25,9 @@ export function createProcup(options: CreateProcupOptions = {}) {
 
   events.on('output', (event: EventOf<'output'>) => terminal.feedScreen({ name: event.name, chunk: event.chunk }))
   events.on('status', (event: EventOf<'status'>) => {
-    if (event.status === 'ready' || event.status === 'finished') orchestration.markProcessReady({ name: event.name })
+    if (event.status === 'starting') orchestration.markProcessStarted({ name: event.name })
+    else if (event.status === 'ready' || event.status === 'finished')
+      orchestration.markProcessReady({ name: event.name })
     else if (event.status === 'failed') orchestration.markProcessFailed({ name: event.name })
   })
 

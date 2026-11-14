@@ -15,7 +15,7 @@ const RED = '31'
 const CYAN = '36'
 const SPINNER = '⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏'
 const NOT_RUNNING = new Set(['pending', 'stopped', 'finished', 'skipped'])
-const STARTABLE = new Set(['stopped', 'finished', 'failed'])
+const STARTABLE = new Set(['pending', 'stopped', 'finished', 'failed', 'skipped'])
 
 const HELP_KEYS: [title: string, keys: [key: string, desc: string][]][] = [
   [

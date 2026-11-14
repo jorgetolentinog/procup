@@ -16,7 +16,7 @@ export function startProject(deps: StartProjectDeps, ctx: StartProjectCtx): Star
 
   const started: string[] = []
   for (const node of ctx.state.nodes.values()) {
-    if (node.dependsOn.length > 0) continue
+    if (!node.autostart || node.dependsOn.length > 0) continue
     ctx.state.nodes.set(node.name, { ...node, state: 'started' })
     deps.process.spawnProcess({ name: node.name })
     started.push(node.name)

@@ -161,3 +161,25 @@ test('a name can be registered only once', () => {
   expect(state.rows.get('web')?.command).toBe('first')
   expect(events.length).toBe(1)
 })
+
+test('a process without autostart is registered as stopped', () => {
+  const events: ProcessEvent[] = []
+  const state: ProcessState = {
+    size: { cols: 80, rows: 24 },
+    rows: new Map(),
+    ptys: new Map(),
+    readyBuffers: new Map(),
+    readied: new Set(),
+    stopping: new Set(),
+    restarting: new Set(),
+  }
+
+  registerProcess(
+    { emit: event => events.push(event) },
+    { state },
+    { name: 'studio', command: 'npx prisma studio', cwd: '/app', autostart: false },
+  )
+
+  expect(state.rows.get('studio')?.status).toBe('stopped')
+  expect(events).toStrictEqual([{ type: 'status', name: 'studio', status: 'stopped' }])
+})

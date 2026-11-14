@@ -381,66 +381,69 @@ test('r restarts the active process and shift+r does nothing', () => {
   expect(calls).toStrictEqual(['restart api', 'frame'])
 })
 
-test('s stops a live process and starts one that stopped, finished or failed', () => {
-  const actions = ['pending', 'starting', 'running', 'ready', 'stopped', 'finished', 'failed'].map(status => {
-    const state: TuiState = {
-      names: ['web'],
-      noColor: false,
-      active: 0,
-      inputMode: false,
-      helpVisible: false,
-      width: 100,
-      height: 30,
-      sidebarWidth: 18,
-      paneX: 22,
-      paneRows: 28,
-      termCols: 75,
-      termRows: 28,
-      scroll: new Map(),
-      selection: null,
-      pressedButtons: new Set(),
-      pointer: { x: 0, y: 0 },
-      scrollbarDrag: null,
-      autoScroll: null,
-      tempMessage: null,
-      tempTimer: null,
-      prevLines: [],
-      frameTimer: null,
-      resizeTimer: null,
-      spinning: false,
-      spinFrame: 0,
-      spinTimer: null,
-      destroyed: false,
-    }
-    const calls: string[] = []
-    handleKey(
-      {
-        procup: {
-          listProcesses: () => [{ name: 'web', status }],
-          restartProcess: () => true,
-          startProcess: (name: string) => calls.push(`start ${name}`),
-          stopProcess: (name: string) => calls.push(`stop ${name}`),
-          writeProcess: () => true,
-          readScreen: () => ({ total: 0 }),
+test('s stops a live process and starts any other', () => {
+  const actions = ['pending', 'starting', 'running', 'ready', 'stopped', 'finished', 'failed', 'skipped'].map(
+    status => {
+      const state: TuiState = {
+        names: ['web'],
+        noColor: false,
+        active: 0,
+        inputMode: false,
+        helpVisible: false,
+        width: 100,
+        height: 30,
+        sidebarWidth: 18,
+        paneX: 22,
+        paneRows: 28,
+        termCols: 75,
+        termRows: 28,
+        scroll: new Map(),
+        selection: null,
+        pressedButtons: new Set(),
+        pointer: { x: 0, y: 0 },
+        scrollbarDrag: null,
+        autoScroll: null,
+        tempMessage: null,
+        tempTimer: null,
+        prevLines: [],
+        frameTimer: null,
+        resizeTimer: null,
+        spinning: false,
+        spinFrame: 0,
+        spinTimer: null,
+        destroyed: false,
+      }
+      const calls: string[] = []
+      handleKey(
+        {
+          procup: {
+            listProcesses: () => [{ name: 'web', status }],
+            restartProcess: () => true,
+            startProcess: (name: string) => calls.push(`start ${name}`),
+            stopProcess: (name: string) => calls.push(`stop ${name}`),
+            writeProcess: () => true,
+            readScreen: () => ({ total: 0 }),
+          },
+          handleMouse: () => true,
+          scheduleFrame: () => true,
+          quit: () => true,
         },
-        handleMouse: () => true,
-        scheduleFrame: () => true,
-        quit: () => true,
-      },
-      { state },
-      { data: 's' },
-    )
-    return `${status}: ${calls.join(',')}`
-  })
+        { state },
+        { data: 's' },
+      )
+      return `${status}: ${calls.join(',')}`
+    },
+  )
 
   expect(actions).toStrictEqual([
-    'pending: stop web',
+    'pending: start web',
     'starting: stop web',
     'running: stop web',
     'ready: stop web',
     'stopped: start web',
     'finished: start web',
     'failed: start web',
+    'skipped: start web',
   ])
 })
 

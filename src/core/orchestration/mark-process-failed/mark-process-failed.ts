@@ -25,7 +25,7 @@ export function markProcessFailed(
   while (changed) {
     changed = false
     for (const [name, n] of ctx.state.nodes) {
-      if (n.state !== 'waiting') continue
+      if (n.state !== 'waiting' || !n.autostart) continue
       const blocked = n.dependsOn.some(dep => {
         const state = ctx.state.nodes.get(dep)?.state
         return state === 'failed' || state === 'skipped'

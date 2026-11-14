@@ -5,9 +5,9 @@ import { startProject } from './start-project.ts'
 test('it spawns only the processes without dependencies', () => {
   const state: OrchestrationState = {
     nodes: new Map([
-      ['db', { name: 'db', dependsOn: [], state: 'waiting' as const }],
-      ['cache', { name: 'cache', dependsOn: [], state: 'waiting' as const }],
-      ['api', { name: 'api', dependsOn: ['db'], state: 'waiting' as const }],
+      ['db', { name: 'db', dependsOn: [], autostart: true, state: 'waiting' as const }],
+      ['cache', { name: 'cache', dependsOn: [], autostart: true, state: 'waiting' as const }],
+      ['api', { name: 'api', dependsOn: ['db'], autostart: true, state: 'waiting' as const }],
     ]),
     stopping: false,
   }
@@ -27,7 +27,7 @@ test('it spawns only the processes without dependencies', () => {
 
 test('a node is marked started before its process is spawned', () => {
   const state: OrchestrationState = {
-    nodes: new Map([['db', { name: 'db', dependsOn: [], state: 'waiting' as const }]]),
+    nodes: new Map([['db', { name: 'db', dependsOn: [], autostart: true, state: 'waiting' as const }]]),
     stopping: false,
   }
   const seen: unknown[] = []
@@ -39,7 +39,7 @@ test('a node is marked started before its process is spawned', () => {
 
   startProject(deps, { state })
 
-  expect(seen).toStrictEqual([{ name: 'db', dependsOn: [], state: 'started' }])
+  expect(seen).toStrictEqual([{ name: 'db', dependsOn: [], autostart: true, state: 'started' }])
 })
 
 test('without a loaded project there is nothing to start', () => {
@@ -56,8 +56,8 @@ test('without a loaded project there is nothing to start', () => {
 test('starting twice is refused', () => {
   const state: OrchestrationState = {
     nodes: new Map([
-      ['db', { name: 'db', dependsOn: [], state: 'started' as const }],
-      ['api', { name: 'api', dependsOn: ['db'], state: 'waiting' as const }],
+      ['db', { name: 'db', dependsOn: [], autostart: true, state: 'started' as const }],
+      ['api', { name: 'api', dependsOn: ['db'], autostart: true, state: 'waiting' as const }],
     ]),
     stopping: false,
   }
@@ -68,4 +68,27 @@ test('starting twice is refused', () => {
 
   expect(result).toStrictEqual({ ok: false, error: 'already_started' })
   expect(spawned).toStrictEqual([])
+})
+
+test('a process without autostart is not spawned and its dependents keep waiting', () => {
+  const state: OrchestrationState = {
+    nodes: new Map([
+      ['app', { name: 'app', dependsOn: [], autostart: true, state: 'waiting' as const }],
+      ['studio', { name: 'studio', dependsOn: [], autostart: false, state: 'waiting' as const }],
+      ['seed', { name: 'seed', dependsOn: ['studio'], autostart: true, state: 'waiting' as const }],
+    ]),
+    stopping: false,
+  }
+  const spawned: string[] = []
+  const deps = { process: { spawnProcess: (input: { name: string }) => spawned.push(input.name) } }
+
+  const result = startProject(deps, { state })
+
+  expect(result).toStrictEqual({ ok: true, started: ['app'] })
+  expect(spawned).toStrictEqual(['app'])
+  expect([...state.nodes.values()].map(n => [n.name, n.state])).toStrictEqual([
+    ['app', 'started'],
+    ['studio', 'waiting'],
+    ['seed', 'waiting'],
+  ])
 })

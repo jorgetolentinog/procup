@@ -9,6 +9,7 @@ import {
   type MarkProcessReadyInput,
   markProcessReady,
 } from './mark-process-ready/mark-process-ready.ts'
+import { type MarkProcessStartedInput, markProcessStarted } from './mark-process-started/mark-process-started.ts'
 import { type StartProjectDeps, startProject } from './start-project/start-project.ts'
 import { type StopProjectDeps, stopProject } from './stop-project/stop-project.ts'
 import type { OrchestrationState } from './state.ts'
@@ -28,6 +29,7 @@ export function createOrchestration(deps: CreateOrchestrationDeps) {
   return {
     loadProject: (input: LoadProjectInput) => loadProject(deps, { state }, input),
     startProject: () => startProject({ process: deps.process }, { state }),
+    markProcessStarted: (input: MarkProcessStartedInput) => markProcessStarted({ state }, input),
     markProcessReady: (input: MarkProcessReadyInput) => markProcessReady({ process: deps.process }, { state }, input),
     markProcessFailed: (input: MarkProcessFailedInput) =>
       markProcessFailed({ process: deps.process }, { state }, input),

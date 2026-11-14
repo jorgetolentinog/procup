@@ -10,6 +10,7 @@ export type RegisterProcessInput = {
   dependsOn?: string[]
   readyText?: string
   showCommand?: boolean
+  autostart?: boolean
 }
 
 export type RegisterProcessDeps = {
@@ -35,6 +36,7 @@ export function registerProcess(
   if (!input.command.trim()) return { ok: false, error: 'invalid_command' }
   if (ctx.state.rows.has(name)) return { ok: false, error: 'duplicate_name' }
 
+  const status = input.autostart === false ? 'stopped' : 'pending'
   ctx.state.rows.set(name, {
     name,
     command: input.command,
@@ -44,9 +46,9 @@ export function registerProcess(
     dependsOn: input.dependsOn ?? [],
     readyText: input.readyText,
     showCommand: input.showCommand ?? true,
-    status: 'pending',
+    status,
   })
 
-  deps.emit({ type: 'status', name, status: 'pending' })
+  deps.emit({ type: 'status', name, status })
   return { ok: true }
 }

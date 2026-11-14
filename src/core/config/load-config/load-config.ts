@@ -33,6 +33,7 @@ type ProcessDefinition = {
   dependsOn: string[]
   readyText?: string
   showCommand: boolean
+  autostart: boolean
 }
 
 export type LoadConfigResult =
@@ -141,6 +142,7 @@ function processOf(
     dependsOn,
     readyText,
     showCommand: typeof p.showCommand === 'boolean' ? p.showCommand : (globals.showCommand ?? true),
+    autostart: p.autostart !== false,
   }
 }
 

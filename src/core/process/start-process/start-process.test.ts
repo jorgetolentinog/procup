@@ -2,8 +2,8 @@ import { expect, test } from 'vitest'
 import type { ProcessState } from '../state.ts'
 import { startProcess } from './start-process.ts'
 
-test('a stopped, finished or failed process is spawned again without its last exit code', () => {
-  for (const status of ['stopped', 'finished', 'failed'] as const) {
+test('a process that is not alive is spawned without its last exit code', () => {
+  for (const status of ['pending', 'stopped', 'finished', 'failed', 'skipped'] as const) {
     const spawned: { name: string; exitCode: number | null | undefined }[] = []
     const state: ProcessState = {
       size: { cols: 80, rows: 24 },
@@ -36,8 +36,8 @@ test('a stopped, finished or failed process is spawned again without its last ex
   }
 })
 
-test('a process that is pending or alive cannot be started', () => {
-  for (const status of ['pending', 'starting', 'running', 'ready', 'stopping', 'skipped'] as const) {
+test('a process that is alive cannot be started', () => {
+  for (const status of ['starting', 'running', 'ready', 'stopping'] as const) {
     const spawned: string[] = []
     const state: ProcessState = {
       size: { cols: 80, rows: 24 },

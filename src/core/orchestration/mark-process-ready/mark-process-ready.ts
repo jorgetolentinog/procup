@@ -23,7 +23,7 @@ export function markProcessReady(
 
   const started: string[] = []
   for (const [name, n] of ctx.state.nodes) {
-    if (n.state !== 'waiting') continue
+    if ((n.state !== 'waiting' && n.state !== 'skipped') || !n.autostart) continue
     if (!n.dependsOn.every(dep => ctx.state.nodes.get(dep)?.state === 'ready')) continue
 
     ctx.state.nodes.set(name, { ...n, state: 'started' })

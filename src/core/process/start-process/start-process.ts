@@ -17,7 +17,7 @@ export function startProcess(
 ): StartProcessResult {
   const row = ctx.state.rows.get(input.name)
   if (!row) return { ok: false, error: 'not_found' }
-  if (row.status !== 'stopped' && row.status !== 'finished' && row.status !== 'failed') {
+  if (row.status === 'starting' || row.status === 'running' || row.status === 'ready' || row.status === 'stopping') {
     return { ok: false, error: 'not_startable' }
   }
 

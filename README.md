@@ -2,156 +2,135 @@
 
 **processes up** — run your dev processes in one terminal, started in dependency order.
 
-`procup` starts every process of your project, waits until each one is actually ready before starting the ones that depend on it, and shows them all side by side in a single terminal UI: one tab per process, live output, input, restart and stop.
+![procup's terminal UI: a sidebar listing each process with its status, next to the live output of the selected process](https://raw.githubusercontent.com/jorgetolentinog/procup/main/docs/screenshot.png)
 
-```
- ● db              │   $ npm run dev
- ⠋ api             │
- ○ web             │   > api@1.0.0 dev
- ✓ migrate         │   > tsx watch src/server.ts
-                   │
- ←/→        tabs   │   Server listening on port 3000
- enter     input   │
- s          stop   │
- r       restart   │
- h          help   │
-```
+procup waits until a process is actually ready (a migration has finished, a server is listening) before it starts the processes that depend on it. You can type into any process, and stop, start or restart it.
 
 ## Install
 
-```sh
-npm install --global procup
+Requires Node.js 22 or later, on macOS or Linux. Windows is not supported.
+
+|                        | npm                     | pnpm                 | yarn                       |
+| ---------------------- | ----------------------- | -------------------- | -------------------------- |
+| Run without installing | `npx procup`            | `pnpm dlx procup`    | `yarn dlx procup` (Yarn 4) |
+| Add to your project    | `npm install -D procup` | `pnpm add -D procup` | `yarn add -D procup`       |
+
+In a project, add a script to `package.json` and run it with `npm run dev` (or `pnpm dev`, `yarn dev`):
+
+```json
+{ "scripts": { "dev": "procup" } }
 ```
 
-Requires Node.js 22 or later, on macOS or Linux.
+To install it globally instead: `npm install --global procup`.
+
+- pnpm may warn `Ignored build scripts: node-pty`. procup does not need them.
+- On Alpine (musl), the prebuilt `node-pty` binary does not load. Install `python3`, `make` and `g++`, then add `--build-from-source` to the `npm install` command.
 
 ## Quick start
 
-Create a `.procuprc` file (JSON) in your project:
+Create a `.procuprc` file (JSON) where you run procup, usually the project root:
 
 ```json
 {
   "processes": {
     "db": "docker compose up -d --wait",
     "migrate": { "command": "npm run migrate", "dependsOn": "db" },
-    "api": { "command": "npm run dev", "cwd": "apps/api", "dependsOn": "migrate" },
-    "web": { "command": "npm run dev", "cwd": "apps/web" }
+    "api": {
+      "command": "npm run dev",
+      "cwd": "apps/api",
+      "dependsOn": "migrate",
+      "readyText": "Server listening"
+    },
+    "web": { "command": "npm run dev", "cwd": "apps/web", "dependsOn": "api" },
+    "studio": { "command": "npx prisma studio", "autostart": false }
   }
 }
 ```
 
-`docker compose up -d --wait` exits once the database is healthy, `migrate` exits when it is done, and only then `api` starts. `web` does not wait for anything.
-
-Then run:
-
-```sh
-procup
-```
+Run `npx procup` (or `npm run dev`). `db`, `migrate`, `api` and `web` start one after another, each once the previous one is ready. `studio` starts only when you select it and press `s`.
 
 ## How processes start
 
-- A process with no `dependsOn` starts right away.
-- A process with `dependsOn` waits until **all** its dependencies are ready.
-- A dependency is ready when:
-  - it has no `readyText` and exits with code 0 (a one-shot task such as a migration), or
-  - it has a `readyText` and that text appears in its output (a long-running server).
-- If a dependency fails, the processes that depend on it are skipped.
-- On quit, processes stop in reverse: a process stops only after everything that depends on it has stopped.
-
-### Waiting for a server
-
-A server never exits, so give it a `readyText`: a line it prints once it is up. Plain text, not a regex; colors are ignored.
-
-```json
-{
-  "processes": {
-    "redis": { "command": "redis-server", "readyText": "Ready to accept connections" },
-    "worker": { "command": "npm run worker", "dependsOn": "redis" }
-  }
-}
-```
+- procup starts each process automatically: right away if it has no `dependsOn`, otherwise once every process in its `dependsOn` is ready.
+- A process is ready when it exits with code 0, or when its `readyText` appears in its output. A server never exits, so give it a `readyText`; otherwise the processes that depend on it never start.
+- If a process fails, the processes waiting on it, directly or indirectly, are skipped. Once it is ready again (say you fix it and press `s`), they start, in the same order.
+- A process with `"autostart": false` is never started or skipped automatically; you start it with `s`. Processes that depend on it wait until it is ready.
+- Dependencies only order automatic starts: `s` starts a process right away, ignoring its `dependsOn`. procup never starts a process a second time on its own, so a process you started or stopped by hand stays that way when its dependencies become ready.
+- On quit, a process stops only after every process that depends on it has stopped. Stopping sends `SIGTERM` to the process group, then `SIGKILL` after 5 seconds.
 
 ## Configuration
 
-`.procuprc` is read from the current directory (or from `--config <path>`).
+procup reads `.procuprc` from the current directory, or the file given with `--config`. Each key in `processes` is a process name; its value is either a command string or an object:
 
-### Processes
+| Field         | Type                          | Default  | Description                                                                                                        |
+| ------------- | ----------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------ |
+| `command`     | `string`                      | required | Command to run with `sh -c`.                                                                                       |
+| `cwd`         | `string`                      | `.`      | Working directory, relative to where you run procup.                                                               |
+| `env`         | `object`                      |          | Environment variables (string values). They override `envFile` and the inherited environment.                      |
+| `envFile`     | `string \| string[] \| false` |          | `.env` file(s) to load, relative to `cwd`. Later files win. Read on every start; a missing file fails the process. |
+| `dependsOn`   | `string \| string[]`          |          | Processes that must be ready before this one starts.                                                               |
+| `readyText`   | `string`                      |          | Text that marks the process as ready when it appears in its output. Plain text, not a regex; colors are ignored.   |
+| `showCommand` | `boolean`                     | `true`   | Print `$ <command>` at the top of its output.                                                                      |
+| `autostart`   | `boolean`                     | `true`   | `false`: start it by hand with `s`.                                                                                |
 
-A process is either a command string or an object:
+`cwd`, `env`, `envFile` and `showCommand` can also be set at the top level, as defaults for every process. A process's own value replaces the default, except `env`, which is merged key by key.
 
-| Field         | Type                          | Description                                                     |
-| ------------- | ----------------------------- | --------------------------------------------------------------- |
-| `command`     | `string`                      | Shell command to run (required).                                |
-| `cwd`         | `string`                      | Working directory, relative to the project.                     |
-| `env`         | `object`                      | Extra environment variables (string values).                    |
-| `envFile`     | `string \| string[] \| false` | `.env` file(s) to load, relative to `cwd`. Read on every start. |
-| `dependsOn`   | `string \| string[]`          | Processes that must be ready first.                             |
-| `readyText`   | `string`                      | Text in the output that marks the process as ready.             |
-| `showCommand` | `boolean`                     | Print the command at the top of the pane. Default `true`.       |
+### Variable substitution
 
-```json
-{ "processes": { "web": "npm run dev" } }
-```
-
-### Global options
-
-`cwd`, `env`, `envFile` and `showCommand` can also be set at the top level. They apply to every process, and each process can override them.
-
-### Environment variables
-
-Any string in the config can use variables from your environment:
+Any string value can use variables from the environment procup runs in:
 
 | Syntax             | Result                                                             |
 | ------------------ | ------------------------------------------------------------------ |
 | `${NAME}`          | Value of `NAME`, or empty.                                         |
 | `${NAME:-default}` | Value of `NAME`, or `default` when it is unset or empty.           |
-| `${NAME:?message}` | Value of `NAME`, or stop with `message` when it is unset or empty. |
+| `${NAME:?message}` | Value of `NAME`, or exit with `message` when it is unset or empty. |
+
+Substitution happens when the config is loaded, so it does not see `env` or `envFile`. To use those in a `command`, write `$NAME` and let the shell expand it.
 
 ## Command line
 
-| Flag                    | Description                                                              |
-| ----------------------- | ------------------------------------------------------------------------ |
-| `--config <path>`       | Use another config file.                                                 |
-| `-e, --env-file <path>` | Load this `.env` file for every process (`false` to turn env files off). |
+```sh
+procup [--config <path>] [--env-file <path>]
+```
 
-`procup` exits with code 1 if any process failed. `Ctrl+C` (or `SIGINT`/`SIGTERM`) stops everything cleanly; a second one quits immediately.
+| Option                  | Description                                                                                                                  |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `--config <path>`       | Config file to use instead of `./.procuprc`.                                                                                 |
+| `-e, --env-file <path>` | Load this file for every process, instead of the configured `envFile`. Relative to each process's `cwd`. `false` loads none. |
+
+Press `Ctrl+C` to quit. `SIGINT` and `SIGTERM` also quit; a second signal exits without waiting for processes to stop. procup exits with code 1 if any process is failed (`✖`) when it quits, and 0 otherwise.
 
 ## Keys
 
-| Key             | Action                                  |
-| --------------- | --------------------------------------- |
-| `←` `→` `1`–`9` | Switch process                          |
-| `↑` `↓`         | Scroll                                  |
-| `PgUp` `PgDn`   | Scroll a page                           |
-| `g` `G`         | Top · bottom                            |
-| `Enter`         | Input mode: keys go to the process      |
-| `Esc`           | Leave input mode                        |
-| `s`             | Stop · start the process                |
-| `r`             | Restart the process                     |
-| `h` `?`         | Help                                    |
-| `Ctrl+C`        | Close help, leave input mode, then quit |
+| Key           | Action                                                   |
+| ------------- | -------------------------------------------------------- |
+| `←` `→`       | Previous / next process                                  |
+| `1`–`9`       | Go to process 1–9                                        |
+| `↑` `↓`       | Scroll one line                                          |
+| `PgUp` `PgDn` | Scroll one page                                          |
+| `g` `G`       | Scroll to top / bottom                                   |
+| `Enter`       | Input mode: keys go to the process until you press `Esc` |
+| `s`           | Stop the process, or start it if it is not running       |
+| `r`           | Restart the process                                      |
+| `h` `?`       | Show / hide help (`Esc` also closes it)                  |
+| `Ctrl+C`      | Quit; in help or input mode, leave it instead            |
 
-With the mouse: click a tab to switch, scroll with the wheel, drag the scrollbar, and drag over the output to copy it (`pbcopy` on macOS, `wl-copy` on Wayland, `xclip` on X11).
+With the mouse: click a process to select it, scroll the output with the wheel or the scrollbar, and drag over the output to copy it. On Linux, copying needs `wl-copy` (Wayland) or `xclip` (X11).
 
 ## Status icons
 
-| Icon       | Meaning                                                 |
-| ---------- | ------------------------------------------------------- |
-| `○` gray   | pending: waiting for its dependencies                   |
-| `⠋` yellow | starting, or waiting for its `readyText`                |
-| `●` green  | running / ready                                         |
-| `✓` green  | finished: a one-shot task that exited with 0            |
-| `✖` red    | failed: the exit code is printed at the end of its pane |
-| `⠋` gray   | stopping                                                |
-| `■` gray   | stopped                                                 |
-| `⊘` gray   | skipped: a dependency failed                            |
+| Icon       | Status                                                              |
+| ---------- | ------------------------------------------------------------------- |
+| `○` gray   | pending: waiting for its dependencies                               |
+| `⠋` yellow | starting, or waiting for its `readyText`                            |
+| `●` green  | running (and ready, if it has a `readyText`)                        |
+| `✓` green  | finished: exited with code 0                                        |
+| `✖` red    | failed: exited with a non-zero code, was killed, or could not start |
+| `⠋` gray   | stopping                                                            |
+| `■` gray   | stopped by you, or not started yet (`autostart: false`)             |
+| `⊘` gray   | skipped: a dependency failed                                        |
 
-Colors follow your terminal theme. Set `NO_COLOR` to turn them off.
-
-## Linux notes
-
-- Prebuilt binaries cover glibc distributions on x64 and arm64. On Alpine (musl), `node-pty` is compiled on install and needs `python3`, `make` and `g++`.
-- Copying with the mouse needs `wl-copy` (Wayland) or `xclip` (X11).
+Set `NO_COLOR` to turn off procup's colors.
 
 ## Credits
 

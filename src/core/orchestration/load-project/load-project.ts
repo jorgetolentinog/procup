@@ -11,6 +11,7 @@ type ProcessDefinition = {
   dependsOn: string[]
   readyText?: string
   showCommand: boolean
+  autostart: boolean
 }
 
 export type LoadProjectDeps = {
@@ -44,7 +45,7 @@ export function loadProject(deps: LoadProjectDeps, ctx: LoadProjectCtx, input: L
   }
 
   for (const p of config.processes) {
-    ctx.state.nodes.set(p.name, { name: p.name, dependsOn: p.dependsOn, state: 'waiting' })
+    ctx.state.nodes.set(p.name, { name: p.name, dependsOn: p.dependsOn, autostart: p.autostart, state: 'waiting' })
   }
 
   return { ok: true, configPath: config.configPath, processes: config.processes.map(p => p.name) }

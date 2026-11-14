@@ -32,8 +32,8 @@ test('an unknown process is not found', () => {
   expect(result).toStrictEqual({ ok: false, error: 'not_found' })
 })
 
-test('a process that is alive or skipped cannot be spawned', () => {
-  for (const status of ['starting', 'running', 'ready', 'stopping', 'skipped'] as const) {
+test('a process that is alive cannot be spawned', () => {
+  for (const status of ['starting', 'running', 'ready', 'stopping'] as const) {
     const events: ProcessEvent[] = []
     const state: ProcessState = {
       size: { cols: 80, rows: 24 },
@@ -491,4 +491,45 @@ test('a shell that cannot be spawned fails the start', () => {
 
   expect(result).toStrictEqual({ ok: false, error: 'spawn_failed', message: 'posix_spawnp failed.' })
   expect(events.at(-2)).toStrictEqual({ type: 'status', name: 'web', status: 'failed' })
+})
+
+test('a skipped process can be spawned', () => {
+  const events: ProcessEvent[] = []
+  const state: ProcessState = {
+    size: { cols: 80, rows: 24 },
+    rows: new Map([
+      [
+        'web',
+        { name: 'web', command: 'web', cwd: '/app', env: {}, dependsOn: [], showCommand: false, status: 'skipped' },
+      ],
+    ]),
+    ptys: new Map(),
+    readyBuffers: new Map(),
+    readied: new Set(),
+    stopping: new Set(),
+    restarting: new Set(),
+  }
+
+  const result = spawnProcess(
+    {
+      nodePty: {
+        spawn: () => ({ pid: 7, onData: () => true, onExit: () => true, write: () => true, resize: () => true }),
+      },
+      nodeFs: { readFileSync: () => '' },
+      nodeUtil: { parseEnv },
+      nodeProcess: { env: { PATH: '/usr/bin' } },
+      emit: event => events.push(event),
+      handleOutput: () => true,
+      handleExit: () => true,
+    },
+    { state },
+    { name: 'web' },
+  )
+
+  expect(result).toStrictEqual({ ok: true })
+  expect(state.rows.get('web')?.status).toBe('running')
+  expect(events).toStrictEqual([
+    { type: 'status', name: 'web', status: 'starting' },
+    { type: 'status', name: 'web', status: 'running' },
+  ])
 })

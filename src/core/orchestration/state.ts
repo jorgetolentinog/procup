@@ -3,6 +3,7 @@ type NodeState = 'waiting' | 'started' | 'ready' | 'failed' | 'skipped'
 type GraphNode = {
   name: string
   dependsOn: string[]
+  autostart: boolean
   state: NodeState
 }
 

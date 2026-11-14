@@ -5,10 +5,10 @@ import { markProcessFailed } from './mark-process-failed.ts'
 test('a failure skips its waiting dependents down the chain', () => {
   const state: OrchestrationState = {
     nodes: new Map([
-      ['db', { name: 'db', dependsOn: [], state: 'started' as const }],
-      ['api', { name: 'api', dependsOn: ['db'], state: 'waiting' as const }],
-      ['web', { name: 'web', dependsOn: ['api'], state: 'waiting' as const }],
-      ['docs', { name: 'docs', dependsOn: [], state: 'started' as const }],
+      ['db', { name: 'db', dependsOn: [], autostart: true, state: 'started' as const }],
+      ['api', { name: 'api', dependsOn: ['db'], autostart: true, state: 'waiting' as const }],
+      ['web', { name: 'web', dependsOn: ['api'], autostart: true, state: 'waiting' as const }],
+      ['docs', { name: 'docs', dependsOn: [], autostart: true, state: 'started' as const }],
     ]),
     stopping: false,
   }
@@ -30,9 +30,9 @@ test('a failure skips its waiting dependents down the chain', () => {
 test('a dependent declared before its dependency is skipped too', () => {
   const state: OrchestrationState = {
     nodes: new Map([
-      ['web', { name: 'web', dependsOn: ['api'], state: 'waiting' as const }],
-      ['api', { name: 'api', dependsOn: ['db'], state: 'waiting' as const }],
-      ['db', { name: 'db', dependsOn: [], state: 'started' as const }],
+      ['web', { name: 'web', dependsOn: ['api'], autostart: true, state: 'waiting' as const }],
+      ['api', { name: 'api', dependsOn: ['db'], autostart: true, state: 'waiting' as const }],
+      ['db', { name: 'db', dependsOn: [], autostart: true, state: 'started' as const }],
     ]),
     stopping: false,
   }
@@ -47,8 +47,8 @@ test('a dependent declared before its dependency is skipped too', () => {
 test('a dependent that already started is not skipped', () => {
   const state: OrchestrationState = {
     nodes: new Map([
-      ['db', { name: 'db', dependsOn: [], state: 'ready' as const }],
-      ['api', { name: 'api', dependsOn: ['db'], state: 'started' as const }],
+      ['db', { name: 'db', dependsOn: [], autostart: true, state: 'ready' as const }],
+      ['api', { name: 'api', dependsOn: ['db'], autostart: true, state: 'started' as const }],
     ]),
     stopping: false,
   }
@@ -66,9 +66,9 @@ test('a dependent that already started is not skipped', () => {
 test('processes are skipped in the graph before the process module hears about it', () => {
   const state: OrchestrationState = {
     nodes: new Map([
-      ['db', { name: 'db', dependsOn: [], state: 'started' as const }],
-      ['api', { name: 'api', dependsOn: ['db'], state: 'waiting' as const }],
-      ['web', { name: 'web', dependsOn: ['api'], state: 'waiting' as const }],
+      ['db', { name: 'db', dependsOn: [], autostart: true, state: 'started' as const }],
+      ['api', { name: 'api', dependsOn: ['db'], autostart: true, state: 'waiting' as const }],
+      ['web', { name: 'web', dependsOn: ['api'], autostart: true, state: 'waiting' as const }],
     ]),
     stopping: false,
   }
@@ -91,4 +91,27 @@ test('an unknown process is reported', () => {
   const result = markProcessFailed(deps, { state }, { name: 'ghost' })
 
   expect(result).toStrictEqual({ ok: false, error: 'not_found' })
+})
+
+test('a process without autostart is never skipped, so its dependents keep waiting for it', () => {
+  const state: OrchestrationState = {
+    nodes: new Map([
+      ['db', { name: 'db', dependsOn: [], autostart: true, state: 'started' as const }],
+      ['studio', { name: 'studio', dependsOn: ['db'], autostart: false, state: 'waiting' as const }],
+      ['seed', { name: 'seed', dependsOn: ['studio'], autostart: true, state: 'waiting' as const }],
+    ]),
+    stopping: false,
+  }
+  const skipped: string[] = []
+  const deps = { process: { skipProcess: (input: { name: string }) => skipped.push(input.name) } }
+
+  const result = markProcessFailed(deps, { state }, { name: 'db' })
+
+  expect(result).toStrictEqual({ ok: true, skipped: [] })
+  expect(skipped).toStrictEqual([])
+  expect([...state.nodes.values()].map(n => [n.name, n.state])).toStrictEqual([
+    ['db', 'failed'],
+    ['studio', 'waiting'],
+    ['seed', 'waiting'],
+  ])
 })

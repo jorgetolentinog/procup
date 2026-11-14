@@ -11,8 +11,16 @@ test('it registers every process and leaves them waiting in the graph', () => {
         ok: true as const,
         configPath: '/project/.procuprc',
         processes: [
-          { name: 'db', command: 'db', cwd: '/project', env: {}, dependsOn: [], showCommand: true },
-          { name: 'api', command: 'api', cwd: '/project', env: {}, dependsOn: ['db'], showCommand: true },
+          { name: 'db', command: 'db', cwd: '/project', env: {}, dependsOn: [], showCommand: true, autostart: true },
+          {
+            name: 'api',
+            command: 'api',
+            cwd: '/project',
+            env: {},
+            dependsOn: ['db'],
+            showCommand: true,
+            autostart: true,
+          },
         ],
       }),
     },
@@ -29,8 +37,8 @@ test('it registers every process and leaves them waiting in the graph', () => {
   expect(result).toStrictEqual({ ok: true, configPath: '/project/.procuprc', processes: ['db', 'api'] })
   expect(registered).toStrictEqual(['db', 'api'])
   expect([...state.nodes.values()]).toStrictEqual([
-    { name: 'db', dependsOn: [], state: 'waiting' },
-    { name: 'api', dependsOn: ['db'], state: 'waiting' },
+    { name: 'db', dependsOn: [], autostart: true, state: 'waiting' },
+    { name: 'api', dependsOn: ['db'], autostart: true, state: 'waiting' },
   ])
 })
 
@@ -90,8 +98,8 @@ test('a process that cannot be registered stops the load and names it', () => {
         ok: true as const,
         configPath: '/project/.procuprc',
         processes: [
-          { name: 'db', command: 'db', cwd: '/project', env: {}, dependsOn: [], showCommand: true },
-          { name: 'db', command: 'db', cwd: '/project', env: {}, dependsOn: [], showCommand: true },
+          { name: 'db', command: 'db', cwd: '/project', env: {}, dependsOn: [], showCommand: true, autostart: true },
+          { name: 'db', command: 'db', cwd: '/project', env: {}, dependsOn: [], showCommand: true, autostart: true },
         ],
       }),
     },
@@ -111,7 +119,7 @@ test('a process that cannot be registered stops the load and names it', () => {
 
 test('loading twice is refused', () => {
   const state: OrchestrationState = {
-    nodes: new Map([['db', { name: 'db', dependsOn: [], state: 'waiting' as const }]]),
+    nodes: new Map([['db', { name: 'db', dependsOn: [], autostart: true, state: 'waiting' as const }]]),
     stopping: false,
   }
   let configReads = 0
@@ -129,4 +137,34 @@ test('loading twice is refused', () => {
 
   expect(result).toStrictEqual({ ok: false, error: 'already_loaded', message: 'Project already loaded' })
   expect(configReads).toBe(0)
+})
+
+test('autostart is kept in the graph', () => {
+  const state: OrchestrationState = { nodes: new Map(), stopping: false }
+  const deps = {
+    config: {
+      loadConfig: () => ({
+        ok: true as const,
+        configPath: '/project/.procuprc',
+        processes: [
+          {
+            name: 'studio',
+            command: 'studio',
+            cwd: '/project',
+            env: {},
+            dependsOn: [],
+            showCommand: true,
+            autostart: false,
+          },
+        ],
+      }),
+    },
+    process: { registerProcess: () => ({ ok: true as const }) },
+  }
+
+  loadProject(deps, { state }, { cwd: '/project' })
+
+  expect([...state.nodes.values()]).toStrictEqual([
+    { name: 'studio', dependsOn: [], autostart: false, state: 'waiting' },
+  ])
 })
